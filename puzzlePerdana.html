@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>Misi Puzzle Matematik</title>
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --secondary: #06B6D4;
+      --accent: #F59E0B;
+      --success: #10B981;
+      --danger: #EF4444;
+      --bg-dark: #0F172A;
+      --card-bg: rgba(30, 41, 59, 0.9);
+      --text-light: #F8FAFC;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      padding: 25px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1.title {
+      font-size: 2rem;
+      font-weight: 800;
+      text-align: center;
+      background: linear-gradient(to right, #38BDF8, #818CF8, #F472B6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: #94A3B8;
+      margin-bottom: 25px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    /* Borang Input */
+    .form-group {
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #CBD5E1;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #334155;
+      background: #1E293B;
+      color: #FFF;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--secondary);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    }
+
+    /* Butang */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 15px;
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+    .btn-secondary { background: #334155; color: white; }
+    .btn-secondary:hover { background: #475569; transform: translateY(-2px); }
+
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; transform: translateY(-2px); }
+
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #DC2626; transform: translateY(-2px); }
+
+    /* Bar Status Permainan */
+    .status-bar {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-label {
+      font-size: 0.75rem;
+      color: #94A3B8;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .status-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    .lives-container {
+      display: flex;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .heart {
+      color: var(--danger);
+      font-size: 1.2rem;
+      transition: transform 0.3s;
+    }
+
+    .heart.lost {
+      color: #475569;
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+
+    /* Kotak Soalan */
+    .question-card {
+      width: 100%;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    }
+
+    .question-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #F8FAFC;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+
+    @media (max-width: 550px) {
+      .options-grid { grid-template-columns: 1fr; }
+      h1.title { font-size: 1.6rem; }
+    }
+
+    .option-btn {
+      background: #1E293B;
+      border: 2px solid #334155;
+      color: #F8FAFC;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--secondary);
+      background: #334155;
+    }
+
+    .option-btn.correct {
+      background: var(--success) !important;
+      border-color: var(--success) !important;
+      color: white;
+    }
+
+    .option-btn.wrong {
+      background: var(--danger) !important;
+      border-color: var(--danger) !important;
+      color: white;
+    }
+
+    /* Maklum Balas */
+    .feedback-box {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      display: none;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.3s;
+    }
+
+    .feedback-box.correct {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--success);
+      color: #A7F3D0;
+    }
+
+    .feedback-box.wrong {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--danger);
+      color: #FECACA;
+    }
+
+    /* Jadual Kedudukan (Leaderboard) */
+    .table-container {
+      width: 100%;
+      max-height: 350px;
+      overflow-y: auto;
+      margin-top: 15px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #1E293B;
+      color: var(--secondary);
+      padding: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #334155;
+    }
+
+    tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+
+    /* Skrin Keputusan */
+    .results-summary {
+      background: #1E293B;
+      padding: 20px;
+      border-radius: 12px;
+      width: 100%;
+      margin-bottom: 15px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-item {
+      font-size: 0.95rem;
+      color: #CBD5E1;
+    }
+
+    .result-item span {
+      font-weight: bold;
+      color: var(--secondary);
+    }
+
+    .message-banner {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #1E293B;
+      padding: 25px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 100%;
+      border: 1px solid #475569;
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  
+  <!-- 1. SKRIN MENU UTAMA -->
+  <div id="screen-menu" class="screen active">
+    <h1 class="title">MISI PUZZLE MATEMATIK</h1>
+    <div class="subtitle">CABARAN NOMBOR PERDANA (TINGKATAN 1)</div>
+    
+    <div class="form-group">
+      <label for="playerName">Nama Pemain:</label>
+      <input type="text" id="playerName" placeholder="Masukkan nama penuh" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label for="playerClass">Kelas:</label>
+      <input type="text" id="playerClass" placeholder="Contoh: 1 Cemerlang" autocomplete="off">
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🚀 MULA PERMAINAN</button>
+      <button class="btn btn-secondary" onclick="showModal('instructions-modal')">📖 ARAHAN</button>
+      <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 REKOD PEMAIN</button>
+      <button class="btn btn-danger" onclick="exitGame()">🚪 KELUAR</button>
+    </div>
+  </div>
+
+  <!-- 2. SKRIN PERMAINAN (GAMEPLAY) -->
+  <div id="screen-game" class="screen">
+    <!-- Bar Status Status Permainan -->
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-label">Pemain</span>
+        <span class="status-value" id="disp-name" style="font-size:0.85rem;">-</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Level</span>
+        <span class="status-value">1</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Masa</span>
+        <span class="status-value" id="disp-timer">00:00</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Skor</span>
+        <span class="status-value" id="disp-score">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Nyawa</span>
+        <div class="lives-container" id="disp-lives">
+          <span class="heart">❤️</span>
+          <span class="heart">❤️</span>
+          <span class="heart">❤️</span>
+        </div>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Soalan</span>
+        <span class="status-value" id="disp-progress">1/15</span>
+      </div>
+    </div>
+
+    <!-- Kotak Soalan -->
+    <div class="question-card">
+      <div class="question-title" id="q-text">Memuatkan Soalan...</div>
+      <div class="options-grid" id="options-container">
+        <!-- Pilihan Diisi Menggunakan JS -->
+      </div>
+      <div id="feedback-box" class="feedback-box"></div>
+    </div>
+
+    <div class="btn-group" style="margin-top:0;">
+      <button id="btn-next" class="btn btn-success" style="display:none;" onclick="nextQuestion()">SOALAN SETERUSNYA ➔</button>
+    </div>
+  </div>
+
+  <!-- 3. SKRIN KEPUTUSAN / GAME OVER -->
+  <div id="screen-results" class="screen">
+    <h1 class="title" id="res-title">KEPUTUSAN PERMAINAN</h1>
+    <div class="message-banner" id="res-message">Tahniah! Anda Berjaya!</div>
+
+    <div class="results-summary">
+      <div class="result-item">Nama: <span id="res-name">-</span></div>
+      <div class="result-item">Kelas: <span id="res-class">-</span></div>
+      <div class="result-item">Jumlah Skor: <span id="res-score">0</span></div>
+      <div class="result-item">Tempoh Masa: <span id="res-time">00:00</span></div>
+      <div class="result-item">Baki Nyawa: <span id="res-lives">0</span></div>
+      <div class="result-item">Betul / Salah: <span id="res-accuracy">0 / 0</span></div>
+    </div>
+
+    <div id="save-status" style="margin-bottom:15px; font-weight:600; color:var(--secondary); text-align:center;">
+      Menghantar rekod ke Google Sheets...
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="restartGame()">🔄 MAIN SEMULA</button>
+      <button class="btn btn-secondary" onclick="showScreen('screen-menu')">🏠 MENU UTAMA</button>
+    </div>
+  </div>
+
+  <!-- 4. SKRIN REKOD PEMAIN (LEADERBOARD) -->
+  <div id="screen-leaderboard" class="screen">
+    <h1 class="title">REKOD PEMAIN</h1>
+    <div class="subtitle">Kedudukan Terbaik Mengikut Skor</div>
+    
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nama</th>
+            <th>Kelas</th>
+            <th>Skor</th>
+            <th>Masa</th>
+            <th>Nyawa</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <tr><td colspan="6" style="text-align:center;">Memuatkan data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="btn-group" style="margin-top:20px;">
+      <button class="btn btn-secondary" onclick="showScreen('screen-menu')">🏠 KEMBALI KE MENU</button>
+    </div>
+  </div>
+
+  <!-- MODAL ARAHAN -->
+  <div id="instructions-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 style="color:var(--secondary); margin-bottom:15px; text-align:center;">📖 ARAHAN PERMAINAN</h2>
+      <ul style="text-align:left; line-height:1.6; margin-bottom:20px; padding-left:20px; color:#CBD5E1; font-size:0.95rem;">
+        <li>Jawab <strong>15 soalan puzzle</strong> berkaitan Nombor Perdana secara berturut-turut.</li>
+        <li>Setiap jawapan <strong>BETUL</strong> mendapat <strong>10 Markah</strong>.</li>
+        <li>Anda dibekalkan dengan <strong>3 NYAWA (❤️)</strong>. Setiap jawapan salah mengurangkan 1 nyawa.</li>
+        <li>Permainan tamat apabila <strong>nyawa menjadi 0 (Game Over)</strong> atau semua soalan dijawab.</li>
+        <li>Masa permainan akan direkodkan.</li>
+        <li>Keputusan akhir akan disimpan secara automatik ke dalam Google Sheets!</li>
+      </ul>
+      <button class="btn btn-primary" onclick="hideModal('instructions-modal')">FAHAM & MULA</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // BANK SOALAN (15 Soalan Matematik Tingkatan 1 - Nombor Perdana)
+  const masterQuestions = [
+    {
+      q: "Antara nombor berikut, yang manakah merupakan NOMBOR PERDANA?",
+      options: ["9", "15", "17", "21"],
+      ans: 2,
+      exp: "17 ialah nombor perdana kerana hanya boleh dibahagi tepat dengan 1 dan 17 sahaja."
+    },
+    {
+      q: "Berapakah bilangan nombor perdana yang terdapat di antara nombor 1 hingga 10?",
+      options: ["3", "4", "5", "6"],
+      ans: 1,
+      exp: "Terdapat 4 nombor perdana antara 1-10 iaitu: 2, 3, 5, dan 7."
+    },
+    {
+      q: "Manakah SATU-SATUNYA nombor perdana yang merupakan NOMBOR GENAP?",
+      options: ["0", "2", "4", "6"],
+      ans: 1,
+      exp: "2 ialah satu-satunya nombor perdana genap. Nombor genap lain mempunyai faktor selain 1 dan dirinya sendiri."
+    },
+    {
+      q: "Antara nombor berikut, manakah BUKAN nombor perdana (Nombor Gubahan)?",
+      options: ["2", "3", "9", "11"],
+      ans: 2,
+      exp: "9 bukan nombor perdana kerana mempunyai lebih daripada dua faktor (Faktor 9: 1, 3, 9)."
+    },
+    {
+      q: "Pilih kumpulan yang KESEMUANYA terdiri daripada Nombor Perdana.",
+      options: ["2, 3, 5, 7", "1, 3, 5, 7", "3, 5, 9, 11", "2, 4, 6, 8"],
+      ans: 0,
+      exp: "2, 3, 5, dan 7 semuanya ialah nombor perdana. (Nota: Nombor 1 bukan nombor perdana)."
+    },
+    {
+      q: "Adakah nombor 1 dianggap sebagai Nombor Perdana?",
+      options: ["Ya", "Tidak", "Kadang-kadang", "Hanya jika ditambah 1"],
+      ans: 1,
+      exp: "Tidak. Nombor perdana mestilah nombor bulat yang mempunyai tepat DUA faktor berbeza."
+    },
+    {
+      q: "Antara julat nombor 20 hingga 30, pilih pasangan nombor perdana yang betul:",
+      options: ["21 dan 23", "23 dan 29", "25 dan 27", "21 dan 29"],
+      ans: 1,
+      exp: "23 dan 29 adalah dua nombor perdana dalam julat 20 hingga 30."
+    },
+    {
+      q: "Apakah faktor-faktor bagi nombor perdana 13?",
+      options: ["1 sahaja", "1 dan 13 sahaja", "1, 3 dan 13", "1, 2 dan 13"],
+      ans: 1,
+      exp: "Faktor bagi 13 hanyalah 1 dan 13."
+    },
+    {
+      q: "Puzzle Nombor: Manakah nombor perdana terkecil yang LEBIH BESAR daripada 30?",
+      options: ["31", "33", "35", "37"],
+      ans: 0,
+      exp: "31 ialah nombor perdana pertama selepas 30."
+    },
+    {
+      q: "Berapakah hasil tambah bagi dua nombor perdana terkecil?",
+      options: ["3", "5", "7", "8"],
+      ans: 1,
+      exp: "Dua nombor perdana terkecil ialah 2 dan 3. Hasil tambah: 2 + 3 = 5."
+    },
+    {
+      q: "Antara nombor berikut, manakah mempunyai LEBIH daripada 2 faktor?",
+      options: ["19", "23", "27", "31"],
+      ans: 2,
+      exp: "27 mempunyai faktor 1, 3, 9, 27 (Nombor Gubahan)."
+    },
+    {
+      q: "Cari nilai x: jika x ialah nombor perdana dan 40 < x < 45.",
+      options: ["41 dan 43", "41 sahaja", "43 sahaja", "41, 42 dan 43"],
+      ans: 0,
+      exp: "Kedua-dua nombor 41 dan 43 adalah nombor perdana."
+    },
+    {
+      q: "Manakah antara pernyataan berikut BENAR mengenai Nombor Perdana?",
+      options: [
+        "Semua nombor ganjil ialah nombor perdana",
+        "Semua nombor perdana ialah nombor ganjil",
+        "Nombor perdana hanya mempunyai tepat 2 faktor",
+        "Nombor 0 ialah nombor perdana"
+      ],
+      ans: 2,
+      exp: "Nombor perdana ditakrifkan sebagai nombor yang hanya mempunyai tepat dua faktor berbeza."
+    },
+    {
+      q: "Tentukan nombor perdana daripada set berikut: [ 49, 51, 53, 55 ]",
+      options: ["49", "51", "53", "55"],
+      ans: 2,
+      exp: "53 ialah nombor perdana. (49=7x7, 51=3x17, 55=5x11)."
+    },
+    {
+      q: "Apakah nombor perdana terbesar yang KURANG daripada 20?",
+      options: ["15", "17", "18", "19"],
+      ans: 3,
+      exp: "19 ialah nombor perdana terbesar sebelum mencapai 20."
+    }
+  ];
+
+  // PEMBOLEHUBAH PERMAINAN
+  let activeQuestions = [];
+  let currentQIndex = 0;
+  let score = 0;
+  let lives = 3;
+  let correctAnswers = 0;
+  let wrongAnswers = 0;
+  let timerInterval = null;
+  let secondsElapsed = 0;
+  let recordSaved = false;
+
+  let playerInfo = {
+    name: "",
+    className: ""
+  };
+
+  // KESAN BUNYI SINTETIK (WEB AUDIO API)
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+
+  function playSound(type) {
+    try {
+      if (!audioCtx) audioCtx = new AudioContext();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'correct') {
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else if (type === 'win') {
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      }
+    } catch(e) { console.log("Audio tidak disokong"); }
+  }
+
+  // NAVIGASI SKRIN
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  function showModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+  }
+
+  function hideModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+  }
+
+  function exitGame() {
+    if (confirm("Adakah anda pasti ingin keluar dari permainan?")) {
+      window.close();
+      document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:20%;'>Sila tutup tab pelayar ini. Terima kasih kerana bermain!</h2>";
+    }
+  }
+
+  // MULA PERMAINAN
+  function startGame() {
+    const nameInput = document.getElementById('playerName').value.trim();
+    const classInput = document.getElementById('playerClass').value.trim();
+
+    if (!nameInput || !classInput) {
+      alert("Sila isi NAMA dan KELAS anda sebelum memulakan permainan!");
+      return;
+    }
+
+    playerInfo.name = nameInput;
+    playerInfo.className = classInput;
+
+    // Reset Pembolehubah
+    score = 0;
+    lives = 3;
+    currentQIndex = 0;
+    correctAnswers = 0;
+    wrongAnswers = 0;
+    secondsElapsed = 0;
+    recordSaved = false;
+
+    // Susun Soalan Secara Rawak
+    activeQuestions = [...masterQuestions].sort(() => Math.random() - 0.5);
+
+    // Kemaskini Paparan Status
+    document.getElementById('disp-name').innerText = playerInfo.name;
+    document.getElementById('disp-score').innerText = "0";
+    document.getElementById('disp-timer').innerText = "00:00";
+    updateLivesDisplay();
+
+    showScreen('screen-game');
+    startTimer();
+    loadQuestion();
+  }
+
+  // PEMASA
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      secondsElapsed++;
+      const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+      const secs = String(secondsElapsed % 60).padStart(2, '0');
+      document.getElementById('disp-timer').innerText = `${mins}:${secs}`;
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+  }
+
+  // KEMASKINI PAPARAN NYAWA
+  function updateLivesDisplay() {
+    const container = document.getElementById('disp-lives');
+    container.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const heart = document.createElement('span');
+      heart.className = i < lives ? 'heart' : 'heart lost';
+      heart.innerText = '❤️';
+      container.appendChild(heart);
+    }
+  }
+
+  // PAPAR SOALAN
+  function loadQuestion() {
+    const q = activeQuestions[currentQIndex];
+    document.getElementById('disp-progress').innerText = `${currentQIndex + 1}/${activeQuestions.length}`;
+    document.getElementById('q-text').innerText = `${currentQIndex + 1}. ${q.q}`;
+    
+    const feedbackBox = document.getElementById('feedback-box');
+    feedbackBox.style.display = 'none';
+    feedbackBox.className = 'feedback-box';
+    document.getElementById('btn-next').style.display = 'none';
+
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    q.options.forEach((opt, index) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkAnswer(index, btn);
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  // SEMAK JAWAPAN
+  function checkAnswer(selectedIndex, selectedBtn) {
+    const btns = document.querySelectorAll('.option-btn');
+    btns.forEach(b => b.disabled = true);
+
+    const q = activeQuestions[currentQIndex];
+    const feedbackBox = document.getElementById('feedback-box');
+
+    if (selectedIndex === q.ans) {
+      playSound('correct');
+      selectedBtn.classList.add('correct');
+      score += 10;
+      correctAnswers++;
+      document.getElementById('disp-score').innerText = score;
+      
+      feedbackBox.className = 'feedback-box correct';
+      feedbackBox.innerHTML = `<strong>BETUL! 🎉</strong><br>${q.exp}`;
+    } else {
+      playSound('wrong');
+      selectedBtn.classList.add('wrong');
+      btns[q.ans].classList.add('correct');
+      lives--;
+      wrongAnswers++;
+      updateLivesDisplay();
+
+      feedbackBox.className = 'feedback-box wrong';
+      feedbackBox.innerHTML = `<strong>CUBA LAGI! ❌</strong><br>${q.exp}`;
+    }
+
+    feedbackBox.style.display = 'block';
+
+    if (lives <= 0) {
+      setTimeout(() => endGame(false), 1800);
+    } else {
+      document.getElementById('btn-next').style.display = 'inline-flex';
+    }
+  }
+
+  // SOALAN SETERUSNYA
+  function nextQuestion() {
+    currentQIndex++;
+    if (currentQIndex >= activeQuestions.length) {
+      endGame(true);
+    } else {
+      loadQuestion();
+    }
+  }
+
+  // TAMAT PERMAINAN
+  function endGame(isCompleted) {
+    stopTimer();
+    const timeFormatted = document.getElementById('disp-timer').innerText;
+
+    document.getElementById('res-name').innerText = playerInfo.name;
+    document.getElementById('res-class').innerText = playerInfo.className;
+    document.getElementById('res-score').innerText = score;
+    document.getElementById('res-time').innerText = timeFormatted;
+    document.getElementById('res-lives').innerText = lives;
+    document.getElementById('res-accuracy').innerText = `${correctAnswers} / ${wrongAnswers}`;
+
+    const titleEl = document.getElementById('res-title');
+    const msgEl = document.getElementById('res-message');
+
+    if (lives <= 0) {
+      titleEl.innerText = "GAME OVER 💔";
+      titleEl.style.color = "var(--danger)";
+      msgEl.innerText = "Nyawa anda telah habis! Sila cuba lagi untuk kuasai topik Nombor Perdana.";
+    } else {
+      playSound('win');
+      titleEl.innerText = "MISI SELESAI! 🎉";
+      titleEl.style.color = "var(--success)";
+      if (score >= 130) {
+        msgEl.innerText = "Luar Biasa! Anda Pakar Nombor Perdana!";
+      } else if (score >= 80) {
+        msgEl.innerText = "Tahniah! Syabas atas pencapaian anda!";
+      } else {
+        msgEl.innerText = "Usaha yang baik! Teruskan latihan!";
+      }
+    }
+
+    showScreen('screen-results');
+    sendRecordToGoogleSheets(timeFormatted);
+  }
+
+  // INTEGRASI GOOGLE SHEETS VIA APPS SCRIPT
+  function sendRecordToGoogleSheets(timeFormatted) {
+    if (recordSaved) return;
+
+    const saveStatus = document.getElementById('save-status');
+    saveStatus.style.color = 'var(--accent)';
+    saveStatus.innerText = '⏳ Menyimpan rekod ke Google Sheets...';
+
+    const payload = {
+      name: playerInfo.name,
+      className: playerInfo.className,
+      score: score,
+      timeFormatted: timeFormatted,
+      lives: lives
+    };
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response && response.success) {
+          recordSaved = true;
+          saveStatus.style.color = 'var(--success)';
+          saveStatus.innerText = '✅ REKOD BERJAYA DISIMPAN!';
+        } else {
+          saveStatus.style.color = 'var(--danger)';
+          saveStatus.innerText = '⚠️ Gagal menyimpan rekod.';
+        }
+      })
+      .withFailureHandler(function(err) {
+        saveStatus.style.color = 'var(--danger)';
+        saveStatus.innerText = '⚠️ Ralat rangkaian. Rekod gagal dihantar.';
+      })
+      .savePlayerRecord(payload);
+  }
+
+  // PAPAR REKOD PEMAIN (LEADERBOARD)
+  function showLeaderboard() {
+    showScreen('screen-leaderboard');
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Memuatkan data dari Google Sheets...</td></tr>';
+
+    google.script.run
+      .withSuccessHandler(function(records) {
+        tbody.innerHTML = '';
+        if (!records || records.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Tiada rekod ditemui.</td></tr>';
+          return;
+        }
+
+        records.forEach((rec, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${idx + 1}</strong></td>
+            <td>${escapeHtml(rec.name)}</td>
+            <td>${escapeHtml(rec.className)}</td>
+            <td style="color:var(--secondary); font-weight:bold;">${rec.score}</td>
+            <td>${rec.timeFormatted}</td>
+            <td>${'❤️'.repeat(rec.lives)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .withFailureHandler(function() {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--danger);">Gagal memuatkan rekod.</td></tr>';
+      })
+      .getPlayerRecords();
+  }
+
+  function restartGame() {
+    startGame();
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+</script>
+
+</body>
+</html>
